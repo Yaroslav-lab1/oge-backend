@@ -1,0 +1,80 @@
+name: oge-backend
+
+x-app-environment: &app-environment
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-oge}:${POSTGRES_PASSWORD:-oge_dev_password}@db:5432/${POSTGRES_DB:-oge}
+  REDIS_URL: redis://redis:6379/0
+  JWT_SECRET: ${JWT_SECRET:-development-only-change-me}
+  METRICS_TOKEN: ${METRICS_TOKEN:-development-metrics-token}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+
+services:
+  db:
+    image: postgres:16.15-alpine3.24
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-oge}
+      POSTGRES_USER: ${POSTGRES_USER:-oge}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oge_dev_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4.12-alpine3.21
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    environment: *app-environment
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  seed:
+    build: .
+    command: ["python", "-m", "scripts.seed"]
+    environment:
+      <<: *app-environment
+      SEED_PASSWORD: ${SEED_PASSWORD:-Demo-only-ChangeMe-123!}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
+  api:
+    build: .
+    environment: *app-environment
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+
+  prometheus:
+    profiles: ["monitoring"]
+    image: prom/prometheus:v3.15.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
