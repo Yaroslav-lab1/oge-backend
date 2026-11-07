@@ -15,7 +15,7 @@ from app.errors import ApiError, conflict, forbidden, not_found
 from app.models.auth import User
 from app.models.content import TaskVersion
 from app.models.review import ReviewAssignment, ReviewDispute, ReviewScore
-from app.models.session import Answer
+from app.models.session import Answer, ExamSession
 from app.scoring import create_result_if_ready
 
 router = APIRouter(tags=["review"])
@@ -63,6 +63,10 @@ async def _owned_review(db: AsyncSession, review_id: str, expert_id: str) -> Rev
     review = await db.get(ReviewAssignment, review_id)
     if review is None:
         raise not_found("Проверка не найдена")
+    await db.execute(
+        select(ExamSession).where(ExamSession.id == review.session_id).with_for_update()
+    )
+    await db.refresh(review, with_for_update=True)
     if review.expert_id != expert_id:
         raise forbidden("Проверка назначена другому эксперту")
     if review.status != "CLAIMED":
@@ -130,6 +134,11 @@ async def claim_review(review_id: str, db: Db, expert: Expert) -> dict:
     review = await db.get(ReviewAssignment, review_id)
     if review is None:
         raise not_found("Проверка не найдена")
+    # Serialize both rounds of a work, including concurrent claims by one expert.
+    await db.execute(
+        select(ExamSession).where(ExamSession.id == review.session_id).with_for_update()
+    )
+    await db.refresh(review)
     prior = await db.scalar(
         select(ReviewAssignment.id).where(
             ReviewAssignment.session_id == review.session_id,
@@ -258,6 +267,10 @@ async def resolve_dispute(dispute_id: str, body: ResolveBody, db: Db, senior: Se
     dispute = await db.get(ReviewDispute, dispute_id)
     if dispute is None:
         raise not_found("Спор не найден")
+    await db.execute(
+        select(ExamSession).where(ExamSession.id == dispute.session_id).with_for_update()
+    )
+    await db.refresh(dispute, with_for_update=True)
     if dispute.status != "PENDING":
         raise conflict("DISPUTE_RESOLVED", "Спор уже разрешён")
     task = await db.get(TaskVersion, dispute.task_version_id)

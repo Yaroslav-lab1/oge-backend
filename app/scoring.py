@@ -119,7 +119,12 @@ def grade_for_score(
 async def _context(
     db: AsyncSession, session_id: str
 ) -> tuple[ExamSession, Exam, ScoringRuleVersion, list[TaskVersion]]:
-    session = await db.get(ExamSession, session_id)
+    session = await db.scalar(
+        select(ExamSession)
+        .where(ExamSession.id == session_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
     if session is None:
         raise ApiError(404, "SESSION_NOT_FOUND", "Сессия не найдена")
     assignment = await db.get(ExamAssignment, session.assignment_id)

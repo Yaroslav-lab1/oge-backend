@@ -61,6 +61,8 @@ jobs:
           alembic upgrade head
           python -m scripts.seed
           python -m scripts.seed
+      - name: PostgreSQL concurrent transactions
+        run: POSTGRES_TEST_URL="$DATABASE_URL" python -m pytest -q tests/test_postgres_concurrency.py
       - name: Generate and validate OpenAPI
         run: |
           python -m scripts.export_openapi
