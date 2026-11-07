@@ -523,7 +523,6 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("variant_id", "task_version_id"),
         sa.UniqueConstraint("variant_id", "ordinal"),
-        sa.UniqueConstraint("variant_id", "task_version_id"),
     )
     op.create_table(
         "kim_answer_keys",

@@ -83,7 +83,6 @@ class ExamVariantTask(Base):
     __tablename__ = "exam_variant_tasks"
     __table_args__ = (
         UniqueConstraint("variant_id", "ordinal"),
-        UniqueConstraint("variant_id", "task_version_id"),
         CheckConstraint("ordinal > 0"),
     )
 
