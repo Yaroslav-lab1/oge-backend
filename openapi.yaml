@@ -3156,8 +3156,8 @@
           "content": {
             "application/zip": {
               "schema": {
+                "contentMediaType": "application/octet-stream",
                 "description": "ZIP-пакет КИМ, максимум 50 МБ",
-                "format": "binary",
                 "title": "Payload",
                 "type": "string"
               }
@@ -3295,8 +3295,8 @@
           "content": {
             "application/zip": {
               "schema": {
+                "contentMediaType": "application/octet-stream",
                 "description": "ZIP-пакет КИМ, максимум 50 МБ",
-                "format": "binary",
                 "title": "Payload",
                 "type": "string"
               }

@@ -4,6 +4,7 @@ from urllib.parse import urlsplit
 
 _DEVELOPMENT_SECRETS = {
     "development-only-change-me",
+    "development-only-change-me-at-least-32-bytes",
     "development-metrics-token",
     "replace-with-a-long-random-local-secret",
     "replace-with-a-long-random-metrics-token",
@@ -14,7 +15,7 @@ _DEVELOPMENT_SECRETS = {
 class Settings:
     database_url: str = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./oge.db")
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-    jwt_secret: str = os.getenv("JWT_SECRET", "development-only-change-me")
+    jwt_secret: str = os.getenv("JWT_SECRET", "development-only-change-me-at-least-32-bytes")
     access_minutes: int = int(os.getenv("ACCESS_TOKEN_MINUTES", "15"))
     refresh_days: int = int(os.getenv("REFRESH_TOKEN_DAYS", "7"))
     cors_origins: tuple[str, ...] = tuple(
@@ -34,7 +35,7 @@ class Settings:
             ("JWT_SECRET", self.jwt_secret),
             ("METRICS_TOKEN", self.metrics_token),
         ):
-            if not secret.strip() or secret in _DEVELOPMENT_SECRETS:
+            if len(secret.encode()) < 32 or secret in _DEVELOPMENT_SECRETS:
                 raise ValueError(f"{name} must be set to a non-default value in production")
 
         database = urlsplit(self.database_url)

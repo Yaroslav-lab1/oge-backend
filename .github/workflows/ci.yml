@@ -30,7 +30,7 @@ jobs:
     env:
       DATABASE_URL: postgresql+asyncpg://oge:oge_ci_password@localhost:5432/oge
       REDIS_URL: redis://localhost:6379/0
-      JWT_SECRET: ci-only-randomized-in-production
+      JWT_SECRET: ci-only-randomized-in-production-at-least-32-bytes
       METRICS_TOKEN: ci-only-metrics-token
       SEED_PASSWORD: CI-demo-password-12345
     steps:

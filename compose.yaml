@@ -3,7 +3,7 @@ name: oge-backend
 x-app-environment: &app-environment
   DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-oge}:${POSTGRES_PASSWORD:-oge_dev_password}@db:5432/${POSTGRES_DB:-oge}
   REDIS_URL: redis://redis:6379/0
-  JWT_SECRET: ${JWT_SECRET:-development-only-change-me}
+  JWT_SECRET: ${JWT_SECRET:-development-only-change-me-at-least-32-bytes}
   METRICS_TOKEN: ${METRICS_TOKEN:-development-metrics-token}
   CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
   ENVIRONMENT: ${ENVIRONMENT:-development}

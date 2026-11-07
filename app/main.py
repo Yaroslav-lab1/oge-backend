@@ -85,9 +85,9 @@ app = FastAPI(
     title="Учебная платформа ОГЭ — backend API",
     version="1.0.0",
     description="Версионируемый API для учебных экзаменов, проверки и импорта КИМ.",
-    openapi_version="3.1.0",
     lifespan=lifespan,
 )
+app.openapi_version = "3.1.0"
 app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),

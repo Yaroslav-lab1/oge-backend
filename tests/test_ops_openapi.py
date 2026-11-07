@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI, Request
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, iter_route_contexts
 from httpx import ASGITransport, AsyncByteStream, AsyncClient
 from openapi_spec_validator import validate
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
@@ -153,9 +153,9 @@ def test_openapi_31_is_valid_and_covers_every_public_route():
     assert schema["openapi"] == "3.1.0"
     validate(schema)
     actual_paths = {
-        route.path
-        for route in app.routes
-        if isinstance(route, APIRoute) and route.include_in_schema
+        context.path
+        for context in iter_route_contexts(app.routes)
+        if isinstance(context.original_route, APIRoute) and context.original_route.include_in_schema
     }
     assert set(schema["paths"]) == actual_paths
     assert "HTTPBearer" in schema["components"]["securitySchemes"]

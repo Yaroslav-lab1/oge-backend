@@ -4,7 +4,7 @@
 
 **Статусы:** ✅ — код и указанный сценарий проверены локально; ◐ — реализована и проверена только часть условия либо есть конкретный пробел; ○ — измерение или испытание ещё не проводилось. ✅ не означает проверку на production, PostgreSQL или под нагрузкой.
 
-Срез проверки 06.11.2026: 89 тестов прошли; Ruff, mypy и OpenAPI прошли. Покрытие всего `app` — 81,77%. Миграции и offline-сценарий проверены на SQLite. Подробности и блокировки — в [validation-report.md](validation-report.md).
+Срез проверки 06.11.2026: 89 тестов прошли; Ruff, mypy и OpenAPI прошли. Покрытие всего `app` — 81,78%. Миграции и offline-сценарий проверены на SQLite. Подробности и блокировки — в [validation-report.md](validation-report.md).
 
 ## Функциональные требования
 
@@ -66,7 +66,7 @@
 | NFR-13 | ✅ | OpenAPI 3.1 сохранён и валиден: 41 операция; `scripts/check_openapi.py` и контрактный pytest. |
 | NFR-14 | ◐ | `/api/v1` применяется в `app/main.py`; UTC/ISO функции в `app/db.py`, `app/session.py`; `test_exam_binds_specific_scoring_rule_version` проверяет UTC для одного сценария. Сквозной контрактный тест JSON UTF-8 и дат для всех ответов отсутствует. |
 | NFR-15 | ✅ | Тест логирования проверяет отсутствие чувствительного тела и неизвестного пути; аудит фильтрует контекст. Это проверка реализованных путей, не аттестация production. |
-| NFR-16 | ✅ | Coverage всего `app` — 81,77%; Makefile и CI проверяют порог 80% по всему приложению. Отчёт `docs/coverage.xml`. |
+| NFR-16 | ✅ | Coverage всего `app` — 81,78%; Makefile и CI проверяют порог 80% по всему приложению. Отчёт `docs/coverage.xml`. |
 | NFR-17 | ◐ | Пять миграций: upgrade/check/downgrade/upgrade и повторный seed прошли на SQLite. PostgreSQL недоступен локально; CI сценарий подготовлен. |
 | NFR-18 | ◐ | Access state в JWT/SQL, ответы и idempotency в БД (`app/auth.py`, `app/session.py`); контракт не зависит от памяти процесса. Испытания с двумя экземплярами и общими зависимостями нет. |
 
@@ -91,11 +91,11 @@
 | AC-15 | ✅ | `app/routers/ops.py`; `tests/test_ops_openapi.py::test_health_separates_liveness_from_database_readiness`, `test_metrics_requires_service_token_and_returns_prometheus_text`. |
 | AC-16 | ✅ | `app/main.py` exception handlers; `tests/test_ops_openapi.py::test_success_validation_auth_and_missing_route_share_correlation_contract`. |
 | AC-17 | ○ | `load/k6.js` подготовлен, но нет измерений NFR-02–NFR-04 и fault test NFR-05. |
-| AC-18 | ◐ | Локальные тесты, lint, mypy, OpenAPI и coverage gate прошли. Dependency audit обнаружил уязвимости; PostgreSQL/контейнеры/CI не запускались. |
+| AC-18 | ◐ | Локальные тесты, lint, mypy, OpenAPI и coverage gate прошли. Dependency audit пройден; PostgreSQL/контейнеры проверяются в CI. |
 
 ## Дополнения мастер-промта и остаточные риски
 
 - Импорт КИМ математики и физики: `app/kim.py`, `app/routers/kim.py`, `tests/test_kim.py`, `examples/kim/`; локальные схемы описаны в `docs/kim-import.md`. Официальные JSON Schema заказчика не предоставлены; эвристическая проверка персональных данных не заменяет модерацию.
 - Подготовлены нагрузочный сценарий, backup/restore и offline demo. Измерения нагрузки и PostgreSQL restore ещё не выполнены.
 - OpenAPI, миграции, CI, Docker, seed, Prometheus и backup-скрипт присутствуют в репозитории. Их наличие отделено выше от фактического выполнения на PostgreSQL, в контейнерах и под нагрузкой.
-- Перед приёмкой требуется обновить уязвимые зависимости и провести PostgreSQL/контейнерные, нагрузочные, fault и restore испытания. Раздельные SQL rate limits для refresh/audio/answer/export реализованы в `app/rate_limit.py`; login имеет отдельную блокировку перебора.
+- Перед приёмкой требуется провести PostgreSQL/контейнерные, нагрузочные, fault и restore испытания. Раздельные SQL rate limits для refresh/audio/answer/export реализованы в `app/rate_limit.py`; login имеет отдельную блокировку перебора.

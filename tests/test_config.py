@@ -7,8 +7,8 @@ from app.config import Settings
 _PRODUCTION = {
     "environment": "production",
     "database_url": "postgresql+asyncpg://oge:private-password@db/oge",
-    "jwt_secret": "custom-jwt-secret",
-    "metrics_token": "custom-metrics-token",
+    "jwt_secret": "custom-jwt-secret-for-production-tests",
+    "metrics_token": "custom-metrics-token-for-production-tests",
     "cors_origins": ("https://school.example",),
 }
 
