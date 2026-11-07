@@ -103,3 +103,11 @@ jobs:
         run: docker build -t oge-backend:ci .
       - name: Verify non-root runtime user
         run: test "$(docker image inspect --format '{{.Config.User}}' oge-backend:ci)" = "app"
+      - name: Compose startup, restart persistence and backup restore
+        run: bash scripts/ci_smoke.sh
+      - name: Container logs
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop test stack
+        if: always()
+        run: docker compose down -v

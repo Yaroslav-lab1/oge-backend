@@ -29,7 +29,9 @@ docker compose exec -T -e RESTORE_DB="$restore_db" db sh -ec \
 
 count_query="SELECT json_build_array((SELECT count(*) FROM users),
   (SELECT count(*) FROM exams), (SELECT count(*) FROM exam_assignments),
-  (SELECT count(*) FROM kim_package_versions), (SELECT count(*) FROM result_versions));"
+  (SELECT count(*) FROM kim_package_versions), (SELECT count(*) FROM result_versions),
+  (SELECT count(*) FROM answers), (SELECT count(*) FROM answer_revisions),
+  (SELECT md5(string_agg(id || raw::text || revision::text, ',' ORDER BY id)) FROM answers));"
 original="$(docker compose exec -T -e COUNT_QUERY="$count_query" db sh -ec \
   'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At -c "$COUNT_QUERY"')"
 restored="$(docker compose exec -T -e RESTORE_DB="$restore_db" -e COUNT_QUERY="$count_query" db sh -ec \
