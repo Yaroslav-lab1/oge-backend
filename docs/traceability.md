@@ -2,9 +2,9 @@
 
 Источник: `ТЗ_Backend_платформы_ОГЭ_v1.0.docx` от 01.10.2026. Дополнения по импорту КИМ и поставке взяты из `OGE_BACKEND_MASTER_PROMPT.md`; они перечислены после матрицы. Статус ТЗ в исходном документе — «На согласование».
 
-**Статусы:** ✅ — код и указанный сценарий проверены локально; ◐ — реализована и проверена только часть условия либо есть конкретный пробел; ○ — измерение или испытание ещё не проводилось. ✅ не означает проверку на production, PostgreSQL или под нагрузкой.
+**Статусы:** ✅ — код и указанный сценарий проверены локально или в CI; ◐ — реализована и проверена только часть условия либо есть конкретный пробел; ○ — измерение или испытание ещё не проводилось. ✅ не означает проверку на production, PostgreSQL или под нагрузкой.
 
-Срез проверки 06.11.2026: 89 тестов прошли; Ruff, mypy и OpenAPI прошли. Покрытие всего `app` — 81,78%. Миграции и offline-сценарий проверены на SQLite. Подробности и блокировки — в [validation-report.md](validation-report.md).
+Срез проверки 06.11.2026: 89 тестов прошли; Ruff, mypy и OpenAPI прошли. Покрытие всего `app` — 81,58%. Миграции и offline-сценарий проверены на SQLite. Подробности и блокировки — в [validation-report.md](validation-report.md).
 
 ## Функциональные требования
 
@@ -39,7 +39,7 @@
 | FR-27 | ✅ | Оценка 2–5, монотонные пороги, причина снижения и версия правила в `app/scoring.py`, `app/models/review.py::ResultVersion`; `test_geometry_boundary_one_and_two`, `test_grade_never_decreases_when_primary_score_increases`. |
 | FR-28 | ✅ | Ответ результата содержит `checkingStatus`, итог, детализацию и версии правил; доступ владельца проверен `tests/test_review_results.py`. |
 | FR-29 | ✅ | Пересчёт создаёт следующий `ResultVersion`, прежний доступен через `/history`; `app/routers/results.py`, `test_independent_review_dispute_access_and_versioned_result`. |
-| FR-30 | ✅ | Фильтры action/actor_id/object_id/since/until и пагинация; ORM и DB trigger запрещают UPDATE/DELETE аудита. Trigger проверен на мигрированной SQLite; PostgreSQL требует запуска CI. |
+| FR-30 | ✅ | Фильтры action/actor_id/object_id/since/until и пагинация; ORM и DB trigger запрещают UPDATE/DELETE аудита. Trigger проверен на мигрированной SQLite; PostgreSQL trigger устанавливается миграцией в CI; прямой запрет UPDATE проверен на SQLite. |
 | FR-31 | ✅ | Роль `BI_SERVICE`, HMAC-псевдоним и агрегаты без логинов/ответов в `app/routers/results.py::export_results`; `test_bi_export_exposes_only_anonymized_latest_result_data`. |
 | FR-32 | ✅ | Раздельные liveness/readiness, проверка БД в `app/routers/ops.py`; `tests/test_ops_openapi.py::test_health_separates_liveness_from_database_readiness`. |
 | FR-33 | ✅ | Структурированные логи не содержат тело запроса и неизвестный путь; `test_request_logging_excludes_body_and_unmatched_path_secrets`. |
@@ -55,7 +55,7 @@
 | NFR-02 | ○ | Сценарий `load/k6.js` подготовлен; нет отчёта p95 чтения при 300 одновременных сессиях. |
 | NFR-03 | ○ | Сценарий `load/k6.js` подготовлен; нет отчёта p95 сохранения при 50 RPS. |
 | NFR-04 | ○ | Сценарий `load/k6.js` подготовлен; 300 стартов/60 с и доля 5xx не измерялись. |
-| NFR-05 | ○ | `Answer` сохраняется в SQL транзакции (`app/session.py`), но fault test с рестартом экземпляра и проверкой подтверждённого ответа не проводился. |
+| NFR-05 | ✅ | CI 42395589770: реальный рестарт API, подтверждённый ответ и ревизия сохранены; scripts/ci_smoke.sh. |
 | NFR-06 | ○ | `scripts/backup_restore_test.sh` существует; RPO ≤5 мин и RTO ≤30 мин не измерены, Docker daemon недоступен. |
 | NFR-07 | ◐ | Argon2id salted hash проверен `tests/test_auth.py::test_argon2id_password_hash_and_mismatch`. TLS 1.2+ описан в `docs/security.md` как reverse proxy, его конфигурация/сканирование в репозитории отсутствуют. |
 | NFR-08 | ✅ | Ограничение срока access/refresh и ротация в `app/auth.py`, `app/routers/auth.py`; `test_login_refresh_rotation_logout_and_profile`. |
@@ -66,8 +66,8 @@
 | NFR-13 | ✅ | OpenAPI 3.1 сохранён и валиден: 41 операция; `scripts/check_openapi.py` и контрактный pytest. |
 | NFR-14 | ◐ | `/api/v1` применяется в `app/main.py`; UTC/ISO функции в `app/db.py`, `app/session.py`; `test_exam_binds_specific_scoring_rule_version` проверяет UTC для одного сценария. Сквозной контрактный тест JSON UTF-8 и дат для всех ответов отсутствует. |
 | NFR-15 | ✅ | Тест логирования проверяет отсутствие чувствительного тела и неизвестного пути; аудит фильтрует контекст. Это проверка реализованных путей, не аттестация production. |
-| NFR-16 | ✅ | Coverage всего `app` — 81,78%; Makefile и CI проверяют порог 80% по всему приложению. Отчёт `docs/coverage.xml`. |
-| NFR-17 | ◐ | Пять миграций: upgrade/check/downgrade/upgrade и повторный seed прошли на SQLite. PostgreSQL недоступен локально; CI сценарий подготовлен. |
+| NFR-16 | ✅ | Coverage всего `app` — 81,58%; Makefile и CI проверяют порог 80% по всему приложению. Отчёт `docs/coverage.xml`. |
+| NFR-17 | ✅ | Пять миграций: upgrade/check/downgrade/upgrade и повторный seed прошли на SQLite и PostgreSQL в CI 42395589770. |
 | NFR-18 | ◐ | Access state в JWT/SQL, ответы и idempotency в БД (`app/auth.py`, `app/session.py`); контракт не зависит от памяти процесса. Испытания с двумя экземплярами и общими зависимостями нет. |
 
 ## Критерии приёмки
@@ -90,8 +90,8 @@
 | AC-14 | ✅ | `app/routers/results.py::export_results`; `tests/test_review_results.py::test_bi_export_exposes_only_anonymized_latest_result_data`. |
 | AC-15 | ✅ | `app/routers/ops.py`; `tests/test_ops_openapi.py::test_health_separates_liveness_from_database_readiness`, `test_metrics_requires_service_token_and_returns_prometheus_text`. |
 | AC-16 | ✅ | `app/main.py` exception handlers; `tests/test_ops_openapi.py::test_success_validation_auth_and_missing_route_share_correlation_contract`. |
-| AC-17 | ○ | `load/k6.js` подготовлен, но нет измерений NFR-02–NFR-04 и fault test NFR-05. |
-| AC-18 | ◐ | Локальные тесты, lint, mypy, OpenAPI и coverage gate прошли. Dependency audit пройден; PostgreSQL/контейнеры проверяются в CI. |
+| AC-17 | ○ | `load/k6.js` подготовлен, но нет измерений NFR-02–NFR-04 ; fault test NFR-05 прошёл в CI. |
+| AC-18 | ✅ | CI 42395589770: тесты, lint, mypy, OpenAPI, coverage, dependency audit, PostgreSQL и контейнерные smoke tests прошли. |
 
 ## Дополнения мастер-промта и остаточные риски
 
